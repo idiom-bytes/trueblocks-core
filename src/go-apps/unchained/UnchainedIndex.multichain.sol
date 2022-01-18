@@ -21,10 +21,10 @@ Version 2
 */
 
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity ^0.8.11;
 
 contract UnchainedIndex {
-    constructor() public {
+    constructor() {
         owner = msg.sender;
         chainNameToHash["mainnet"] = "QmP4i6ihnVrj8Tx7cTFw4aY6ungpaPYxDJEZ7Vg1RSNSdm"; // empty file
         emit HashPublished("mainnet", chainNameToHash["mainnet"]);
@@ -45,10 +45,10 @@ contract UnchainedIndex {
         return oldOwner;
     }
 
-    function() payable {
-        require(owner != 0x0, "owner is not set");
-        emit DonationSent(owner, value, timestamp);
-        send(owner, balance);
+    function donate() public payable {
+        require(owner != address(0), "owner is not set");
+        emit DonationSent(owner, msg.value, block.timestamp);
+        payable(owner).transfer(address(this).balance);
     }
 
     event HashPublished(string chainName, string hash);
