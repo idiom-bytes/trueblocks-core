@@ -168,3 +168,78 @@ func TestPublishHash(t *testing.T) {
 	}
 
 }
+
+func TestDonate(t *testing.T) {
+	client, auth, _ := simulateClient()
+	// auth.Value = big.NewInt(1000000000000000000) // in wei (1 eth)
+	defer client.Close()
+	_, tx, instance, err := DeployUnchained(auth, client)
+	if err != nil {
+		t.Error(err)
+	}
+	mined := make(chan error)
+	go func() {
+		_, err = bind.WaitDeployed(context.Background(), client, tx)
+		mined <- err
+		close(mined)
+	}()
+	client.Commit()
+
+	select {
+	case err = <-mined:
+		if err != nil {
+			t.Error("transaction error:", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Errorf("timeout")
+	}
+
+	nonce, err := client.PendingNonceAt(context.Background(), auth.From)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(1000000000000000000) // in wei (1 eth)
+	auth.GasLimit = uint64(300000)               // in units
+	auth.GasPrice = gasPrice
+
+	event := make(chan *UnchainedDonationSent)
+	_, err = instance.WatchDonationSent(nil, event)
+
+	publishHashTx, err := instance.Donate(auth)
+	if err != nil {
+		t.Error(err)
+	}
+
+	mined2 := make(chan error)
+	go func() {
+		_, err = bind.WaitMined(context.Background(), client, publishHashTx)
+		mined2 <- err
+		close(mined2)
+	}()
+	client.Commit()
+
+	select {
+	case err = <-mined2:
+		if err != nil {
+			t.Error("transaction error:", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Errorf("timeout")
+	}
+
+	select {
+	case e := <-event:
+		if e.Amount.Cmp(auth.Value) != 0 {
+			t.Error("wrong value", e.Amount)
+		}
+	case <-time.After(2 * time.Second):
+		t.Errorf("timeout")
+	}
+
+}
