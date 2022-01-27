@@ -21,17 +21,22 @@ type trueBlocksVersion struct {
 	Current string
 }
 
+type Chain struct {
+	Name string
+	Rpc  string
+}
+
 type trueBlocksSettings struct {
 	RpcProvider  string
 	CachePath    string
 	IndexPath    string
-	Chain        string
 	EtherscanKey string `toml:"etherscan_key"`
 }
 
 type TrueBlocksConfig struct {
 	Version  trueBlocksVersion
 	Settings trueBlocksSettings
+	Chain    map[string]Chain
 }
 
 // init sets up default values for the given configuration

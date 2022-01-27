@@ -10,9 +10,11 @@ package statusPkg
 
 // EXISTING_CODE
 import (
+	"log"
 	"net/http"
 
 	// "github.com/TrueBlocks/trueblocks-core/src/apps/chifra/pkg/colors"
+	"github.com/TrueBlocks/trueblocks-core/src/apps/chifra/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +45,7 @@ func RunStatus(cmd *cobra.Command, args []string) error {
 	//	meta.Ripe, (meta.Ripe - meta.Staging),
 	//	meta.Unripe, (meta.Unripe - meta.Ripe))
 	// return nil
+	log.Println("TEST:", config.ReadTrueBlocks().Chain["one"].Name)
 	return opts.Globals.PassItOn("cacheStatus", opts.ToCmdLine())
 	// EXISTING_CODE
 }
