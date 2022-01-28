@@ -5,7 +5,7 @@
 package pinlib
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/TrueBlocks/trueblocks-core/src/apps/chifra/pkg/pinlib/manifest"
@@ -20,12 +20,10 @@ func DownloadManifest(gatewayUrl string) (*manifest.Manifest, error) {
 		return nil, err
 	}
 
-	switch response.Header.Get("content-type") {
-	case "text/tab-separated-values":
-		return manifest.ReadTabManifest(response.Body)
-	case "application/json":
-		return manifest.ReadJSONManifest(response.Body)
-	default:
-		return nil, errors.New("unrecognized content type")
+	contentType := response.Header.Get("content-type")
+	if contentType != "application/json" {
+		return nil, fmt.Errorf("wrong manifest content type '%s', only 'application/json' is supported", contentType)
 	}
+
+	return manifest.ReadJSONManifest(response.Body)
 }
