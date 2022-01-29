@@ -12,9 +12,14 @@
  *-------------------------------------------------------------------------------------------*/
 #include "etherlib.h"
 
+int firstCout = true;
+
 //----------------------------------------------------------------
 bool visitTransaction(CTransaction& trans, void* data) {
+    if(!firstCout)
+        cout << ",";
     trans.toJson(cout);
+    firstCout = false;
     return true;
 }
 
@@ -32,12 +37,10 @@ int main(int argc, const char* argv[]) {
     int start = atoi(argv[1]);
     int nBlocks = atoi(argv[2]);
 
-    cout << "Starting block: " << start << "\n";
-    cout << "Num blocks " << nBlocks << "\n";
-
     uint32_t counter = 0;
+    cout << "[";
     forEveryBlock(visitBlock, &counter, start, nBlocks, 1);
-
+    cout << "]";
     etherlib_cleanup();
 
     return 0;

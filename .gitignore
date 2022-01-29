@@ -44,3 +44,5 @@ py-ext/dist/
 *.pyc
 *.pyo
 *.egg-info
+
+.idea/
