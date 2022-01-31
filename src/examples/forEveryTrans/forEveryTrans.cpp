@@ -13,12 +13,22 @@
 #include "etherlib.h"
 
 int firstCout = true;
+CAbi abi_spec;
 
 //----------------------------------------------------------------
 bool visitTransaction(CTransaction& trans, void* data) {
+    abi_spec.loadAbiFromEtherscan(trans.to);
+    for (auto log : trans.receipt.logs)
+        abi_spec.loadAbiFromEtherscan(log.address);
+    abi_spec.articulateTransaction(&trans);
+
     if(!firstCout)
         cout << ",";
+    cout << "  ";
+    indent();
     trans.toJson(cout);
+    unindent();
+
     firstCout = false;
     return true;
 }
@@ -28,20 +38,32 @@ bool visitBlock(CBlock& block, void* data) {
     return block.forEveryTransaction(visitTransaction, data);
 }
 
-//----------------------------------------------------------------
+// Options Main ----------------------------------------------------------------
 int main(int argc, const char* argv[]) {
     loadEnvironmentPaths();
-
     etherlib_init(quickQuitHandler);
 
     int start = atoi(argv[1]);
     int nBlocks = atoi(argv[2]);
 
+    manageFields(defHide, false);
+    manageFields(defShow, true);
+    manageFields("CParameter:strDefault", false);  // hide
+    manageFields("CTransaction:price", false);     // hide
+    manageFields("CFunction:outputs", true);                                               // show
+    manageFields("CTransaction:input", true);                                                  // show
+    manageFields("CLogEntry:data,topics", true);                                               // show
+    manageFields("CTrace: blockHash, blockNumber, transactionHash, transactionIndex", false);  // hide
+    abi_spec.loadAbisFromKnown();
+
+    // Core logic
     uint32_t counter = 0;
     cout << "[";
-    forEveryBlock(visitBlock, &counter, start, nBlocks, 1);
+    forEveryBlock(visitBlock, &counter, start, nBlocks+1, 1);
     cout << "]";
+
     etherlib_cleanup();
 
     return 0;
+
 }
